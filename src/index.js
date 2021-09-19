@@ -1,111 +1,87 @@
-//On the page, there is a div with the id of "dog-bar". When the page loads, use fetch to get all of the pup data from your server. When you have this information, you'll need to add a span with the pup's name to the dog bar (ex: <span>Mr. Bonkers</span>).
-
-const filterDiv = document.querySelector('#filter-div');
-const dogBarDiv = document.querySelector('div#dog-bar');
-const dogCardDiv = document.querySelector('#dog-summary-container');
-const button = document.createElement('button');
-
-//invoke start
-getPupData();
-
-//Event Listeners
+//OFFICE HOUR QUESTIONS
+/// best practice for pulling fetch data once and using an array/object to work with data before sending back or sending that data function by function
+/// currently the index1.js will keep the rendered dog info up to date with the db, however, index will not without refreshing the page/code
 
 
-function getPupData(){
-    fetch('http://localhost:3000/pups')
-    .then(resp => resp.json())
-    //sending data to renderPup without using forEach, but maybe need to??????
-    .then(json => json.forEach(renderPup))
-}
+const baseURL = 'http://localhost:3000/pups';
+const dogBarDiv = document.querySelector('#dog-bar');
+const dogInfoDiv = document.querySelector("#dog-info");
+const pupGoodDogStatusButton = document.createElement('button');
+pupGoodDogStatusButton.addEventListener('click', (event) => changeButtonTextAndUpdate(event, pupFromConvertFetchDataForEach));
 
-function renderPup(pup){
+//let jsonData;
+
+init();
+
+function init(){
     //debugger;
-    //takes in resp.json and does something
-    //create span element using resp.json
-    const newSpanWithPupData = document.createElement('span');
-    newSpanWithPupData.innerText = pup.name;
-    newSpanWithPupData.id = pup.id;
-
-    //console.log(newSpanWithPupData)
-    //append span to filterDiv
-    dogBarDiv.appendChild(newSpanWithPupData);
+    fetch(baseURL)
+    .then(resp => resp.json())
+    .then(json => json.forEach(displayPupButtons))
 };
 
-//user clicks on span and the pup's info shows up in the div "#dog-info"
+/* function convertFetchData(originalJSONPupData){
+console.log(originalJSONPupData)
+//assigned so it can be used outside of the function when needed but is it better to pass original?
+//jsonData = [...originalJSONPupData];
 
-//add event listener to div#dog-bar w cb handlePupSpanClick
-dogBarDiv.addEventListener('click', handlePupSpanClick);
+originalJSONPupData.forEach(displayPupButtons)
+} */
 
-
-//function handlePupSpanClick
-function handlePupSpanClick(e){
-
-    //HOW DO I KEEP JUST DOGGO WITHOUT MANUALLY PUTTING IT BACK IN?
-    dogCardDiv.innerHTML = '<h1>DOGGO:</h1>';
-///get that pups info - use fetch with specific id?
-fetch('http://localhost:3000/pups/' + e.target.id)
-.then(resp => resp.json())
-.then(renderPupCard)
+function displayPupButtons(pupFromConvertFetchDataForEach){
+    const newDogButton = document.createElement('span');
+    newDogButton.innerText = pupFromConvertFetchDataForEach.name;
+    newDogButton.id =  `pup-${pupFromConvertFetchDataForEach.id}`;
+    dogBarDiv.append(newDogButton);
+    newDogButton.addEventListener('click', () => displayDogInfo(pupFromConvertFetchDataForEach));
 }
 
-function renderPupCard(pup){
-    ////img: create, set attributes, append
-    const image = document.createElement('img');
-    image.setAttribute('src', pup.image);
-    image.id = `${pup.id}`;
-    image.style.height = '300px';
-    image.style.width = '300px';
-    dogCardDiv.appendChild(image);
-
-////h2 with name
-    const h2Name = document.createElement('h2');
-    h2Name.innerText = pup.name;
-    dogCardDiv.append(h2Name);
-
-////button that says good dog or bad dog based on whether isGoodDog is true or false
-    if(pup.isGoodDog === true){
-        button.innerText = 'Good dog!';
-        button.value = true;} 
-    else{
-        button.innerText = 'Bad dog!';
-        button.value = false;}
-    dogCardDiv.append(button)
-
-    //add event listener and cb handleButtonClick
-    button.addEventListener('click', handleButtonClick)
-    
-}
-
-function handleButtonClick(e){
+//displays img, name, isGoodDog status on button - get's arguments from displayPupButtons where original fetch data is used
+function displayDogInfo(pupFromConvertFetchDataForEach){
     //debugger;
-    console.log(e.target.value)
-//user clicks button text should change to other option
-if (button.innerText === 'Good dog!'){
-    button.innerText = 'Bad dog!';
-    button.value = false;
-}
-else{
-    button.innerText = 'Good dog!';
-    button.value = true;
+    dogInfoDiv.innerHTML = '';
+    fetch(baseURL)
+    .then(resp => resp.json())
+    .then(json => json.forEach(displayPupButtons))
+
+    const pupImage = document.createElement('img');
+    pupImage.src = pupFromConvertFetchDataForEach.image;
+
+    const pupName = document.createElement('h2');
+    pupName.textContent = pupFromConvertFetchDataForEach.name;
+
+    //taking out button from here and adding to global for event listener??
+    //const pupGoodDogStatusButton = document.createElement('button');
+    if (pupFromConvertFetchDataForEach.isGoodDog === true){
+        pupGoodDogStatusButton.innerText = "Good dog!"}
+    else {
+    pupGoodDogStatusButton.innerText = "Bad dog!"
+    }
+    //removing below to post in global
+    //pupGoodDogStatusButton.addEventListener('click', (event) => changeButtonTextAndUpdate(event, pupFromConvertFetchDataForEach));
+
+    dogInfoDiv.append(pupImage, pupName, pupGoodDogStatusButton)
 }
 
-//WHAT ARE YOU EVEN DOING DOWN HERE
-isGoodDogValue = button.value;
-//pup object is updated with patch request
-updatePupData(isGoodDogValue)
-}
-
-function updatePupData(isGoodDog){
-    //regrab from DOM?
+//PASS THE REFERENCES I NEED THROUGH THE EVENT LISTENER
+function changeButtonTextAndUpdate(event, pupFromConvertFetchDataForEach){
     //debugger;
+    let currentIsGoodDogStatus;
+    if(event.target.textContent === 'Good dog!'){    
+            event.target.textContent = "Bad Dog!";
+            currentIsGoodDogStatus = false;
+    }
+    else {
+            event.target.textContent = "Good dog!";
+            currentIsGoodDogStatus = true;
+    }
 
-    const img = document.querySelector("#dog-summary-container > img");
-
-    fetch(`http://localhost:3000/pups/${img.id}`, {
+    fetch(`${baseURL}/${pupFromConvertFetchDataForEach.id}`, {
     method: 'PATCH',
     headers: {
         'Content-Type': 'application/json'
     },
-    body: JSON.stringify({isGoodDog: JSON.parse(isGoodDog)})
+    body: JSON.stringify({isGoodDog: currentIsGoodDogStatus})
     });
 }
+
